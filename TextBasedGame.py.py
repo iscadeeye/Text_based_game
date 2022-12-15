@@ -1,42 +1,6 @@
-# ========================
+# =========================
 # Developer: Mohamed Hassan
 # =========================
-container = []
-commands = []
-
-print(
-    'Welcome To Thief Catching Game\nYou will need to collect Six items from'
-    '\nsix different rooms to catch the thief or you will be defeated.')
-print('\n-----------------------------------------------------')
-
-player_location = 'Great Hall'
-possible_moves = ''
-
-
-def nCharacter(chars, length):
-    characters = ''
-    for num in range(0, length):
-        characters += chars
-    return characters
-
-
-def show_instructions():
-    command_char_length = 0
-
-    possible_moves = rooms[player_location].keys()
-    print(f'You are in: {player_location}')
-    print('Move Commands: ', end='')
-    for key in rooms[player_location].keys():
-        command = ('Go ' + key).title()
-        print(command, end=' ')
-        commands.append(command)
-        command_char_length += len(command) + 1  # each word's length plus 1, which is for the length for each
-        # space for between words.
-    print()
-    print( nCharacter('-', command_char_length + 14))
-    print("Enter your move:\n")
-    command = input()
-    return command.title()
 
 
 rooms = {
@@ -48,78 +12,81 @@ rooms = {
     'Bedroom': {'East': 'Great Hall', 'item': 'cellphone'},
     'Kitchen': {'West': 'Dining room', 'item': 'knife'},
     'Storeroom': {'South': 'Living room', 'item': 'Thief'}
-
 }
 
 
+# show player location.
+def show_player_location(location):
+    if 'item' in rooms[location]:
+        print(f"You are in {location}")
+    else:
+        print(f"You are in {location} and it is a empty.")
 
-# main game loop
+    directions(location)
 
-if __name__ == '__main__':
-    user_command = show_instructions()
-    print(user_command)
-    while user_command != 'Exit':
 
-        if user_command in commands:  # check if user entered valid a move.
+def directions(location):
+    print("Directions you can go:", end=' ')
+    for direction in rooms[location].keys():
+        if direction != 'item':
+            print(direction, end=' ')
+    print()
 
-            player_location = rooms[player_location][user_command[3:]]  # if user entered valid move, update user
-            # location.
-            # directions = rooms[player_location].keys()  # show the direction a user can go to.
 
-            if player_location == 'Storeroom' and len(container) != 6:
-                print('Take your last breathe, you fool.\nGame over!')
-                break  # game ends if user enters thief's room without collecting all items.
+def get_user_direction(directions):
+    user_input = input().title()
+    direction = user_input[3:] if ' ' in user_input else user_input
+    while direction not in directions and direction != 'Exit':
+        print(f'You cannot go that way. Please go one of that available directions.')
+        user_input = input().title()
+        direction = user_input[3:] if ' ' in user_input else user_input
 
-            elif 'item' not in rooms[player_location]:  # if the key 'item' isn't in player's, it meas the room is
-                # empty.
-                print(f'You are in: {player_location}')
-                print('The room you are in is empty.')
-                user_command = show_instructions()
+    return direction
 
-            else:
-                # show the room user is in and item in the room.
-                print(f'You are in: {player_location}\nYou see {rooms[player_location]["item"]}')
-                # prompt user to get the item or move on .
-                action = input(
-                    'Type \'get {}\' if you to take it or \'exit\' to move on:\n'.format(
-                        rooms[player_location]['item'])).strip().lower()
 
-                item = ('get {}'.format(rooms[player_location]['item']))
+def update_player_location(user_command, player_location, container):
+    return rooms[player_location][user_command]
 
-                # This inner loop is responsible for user's item command. user has the choice to get the item or not.
-                while True:
-                    if action == 'exit':
-                        break  # exit inner loop.
 
-                    elif action != item:
-                        print('Item name is incorrect.')
-                        action = input(
-                            'Type \'get {}\' if you to take or \'exit\' to move on:\n'.format(
-                                rooms[player_location]['item']))
+def retrieve_item(location, item_container):
+    # Check item is in the room.
+    if 'item' in rooms[location]:
+        item = rooms[location]["item"]
+        print(f'You are in {location}')
+        print(f'You see {item}\nType \'get {item}\' to retrieve the item"')
+        user_input = input()
+        if item in user_input:
+            print(f'{item} is retrieved.')
+            item_container.append(rooms[location]['item'])
+            print(item_container)
+            # remove item from rooms.
+            del rooms[location]['item']
 
-                    elif item == action:
-                        container.append(rooms[player_location]['item'])
-                        print(rooms[player_location]['item'], ' is retrieved')
-                        print(f'Inventory: {container}')
-                        del rooms[player_location]['item']
-                        break  # get out inner loop.
-                if len(container) == 6:
-                    print('Congratulations! You defeated the thief.\nThanks for playing. Hope you enjoyed it')
-                    break  # player won. end of game.
 
-                    #  remove 'item' from the list possible directions because item isn't a direction.
-                if 'item' in possible_moves:
-                    print(f'Directions you can go:', commands[:-1])
-                    user_command = show_instructions()
-                else:
-                    user_command = show_instructions()
+def main_menu():
+    player_location = 'Great Hall'
+    user_command = ''
+    item_container = []
+
+    while True:
+        show_player_location(player_location)
+        user_command = get_user_direction(rooms[player_location].keys())
+
+        if user_command == 'Exit':
+            print('Thanks for playing. Please come back')
+            break
         else:
-            print('You can not go that way.')
+            player_location = update_player_location(user_command, player_location, item_container)
 
-            if 'item' in rooms[player_location]:  # remind the user the item, if user enters invalid direction
-                user_command = show_instructions()
+        if player_location == 'Storeroom':
+            print('Take your last breathe, you fool.\nGame over!')
+            break
+        else:
+            retrieve_item(player_location, item_container)
 
-            else:  # if user already retrieved the item that was in the room the player is in it,
-                # remind that the room is empty.
-                print('It is empty room.')
-                user_command = show_instructions()
+        if len(item_container) == 6:
+            print("Congrtulations! You caught the thief.")
+            break
+
+
+main_menu()
